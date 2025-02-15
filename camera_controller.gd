@@ -93,8 +93,18 @@ func _on_panel_gui_input(event: InputEvent) -> void:
 		pivot_node.rotation_degrees.y += delta_angle.y * invert
 		pivot_node.rotation_degrees.x = clamp(pivot_node.rotation_degrees.x + delta_angle.x * invert, -90, 90)
 
-		var panel_rect: Rect2 = panel.get_global_rect()
 
+	elif event is InputEventMouseMotion and dragging:
+		var delta = event.relative - modified
+		modified = Vector2.ZERO
+		var forward_distance = 5
+		if not hit_point == null:
+			forward_distance = abs((hit_point - global_position).dot(global_transform.basis.z))
+		pivot_node.translate(Vector3(-delta.x, delta.y, 0) * (tan(deg_to_rad(self.fov / 2)) / get_viewport().size.y) * forward_distance * 2)
+	
+	if dragging or rotating:
+		var panel_rect: Rect2 = panel.get_global_rect()
+		
 		if mouse_pos.x > panel_rect.position.x + panel_rect.size.x:
 			Input.warp_mouse(Vector2(panel_rect.position.x, mouse_pos.y))
 			modified = Vector2(-panel_rect.size.x, 0)
@@ -108,11 +118,6 @@ func _on_panel_gui_input(event: InputEvent) -> void:
 		if mouse_pos.y < panel_rect.position.y:
 			Input.warp_mouse(Vector2(mouse_pos.x, panel_rect.position.y + panel_rect.size.y))
 			modified = Vector2(0, panel_rect.size.y)
-	elif event is InputEventMouseMotion and dragging:
-		var forward_distance = 5
-		if not hit_point == null:
-			forward_distance = abs((hit_point - global_position).dot(global_transform.basis.z))
-		pivot_node.translate(Vector3(-event.relative.x, event.relative.y, 0) * (tan(deg_to_rad(self.fov / 2)) / get_viewport().size.y) * forward_distance * 2)
 
 func _ready() -> void:
 	panel.connect("gui_input", Callable(self, "_on_panel_gui_input"))
